@@ -15,21 +15,20 @@ const transformStateWithClones = (state, actions) => {
 
   const currentState = structuredClone(state);
 
+  const handlers = {
+    addProperties: (s, a) => addProperties(s, a.extraData),
+    removeProperties: (s, a) => removeProperties(s, a.keysToRemove),
+    clear: (s) => clearProperties(s),
+  };
+
   for (const action of actions) {
-    const { type } = action;
+    const handler = handlers[action.type];
 
-    if (type === 'addProperties') {
-      addProperties(currentState, action.extraData);
+    if (!handler) {
+      throw new Error(`Unknown action type: ${action.type}`);
     }
 
-    if (type === 'removeProperties') {
-      removeProperties(currentState, action.keysToRemove);
-    }
-
-    if (type === 'clear') {
-      clearProperties(currentState);
-    }
-
+    handler(currentState, action);
     stateSequence.push(structuredClone(currentState));
   }
 
