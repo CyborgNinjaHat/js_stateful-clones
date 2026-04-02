@@ -13,44 +13,34 @@ const transformStateWithClones = (state, actions) => {
 
   const stateSequence = [];
 
-  const currentState = structuredClone(state);
-
-  const handlers = {
-    addProperties: (s, a) => addProperties(s, a.extraData),
-    removeProperties: (s, a) => removeProperties(s, a.keysToRemove),
-    clear: (s) => clearProperties(s),
-  };
+  const currentState = Object.assign({}, state);
 
   for (const action of actions) {
-    const handler = handlers[action.type];
+    switch (action.type) {
+      case 'addProperties':
+        Object.assign(currentState, action.extraData);
+        break;
 
-    if (!handler) {
-      throw new Error(`Unknown action type: ${action.type}`);
+      case 'removeProperties':
+        for (const key of action.keysToRemove) {
+          delete currentState[key];
+        }
+        break;
+
+      case 'clear':
+        for (const key in currentState) {
+          delete currentState[key];
+        }
+        break;
+
+      default:
+        throw new Error(`Unknown action type: ${action.type}`);
     }
 
-    handler(currentState, action);
-    stateSequence.push(structuredClone(currentState));
+    stateSequence.push(Object.assign({}, currentState));
   }
 
   return stateSequence;
-};
-
-const addProperties = (state, extraData) => {
-  Object.assign(state, extraData);
-};
-
-const removeProperties = (state, keysToRemove) => {
-  for (const key of keysToRemove) {
-    if (Object.hasOwn(state, key)) {
-      delete state[key];
-    }
-  }
-};
-
-const clearProperties = (state) => {
-  for (const key in state) {
-    delete state[key];
-  }
 };
 
 module.exports = transformStateWithClones;
